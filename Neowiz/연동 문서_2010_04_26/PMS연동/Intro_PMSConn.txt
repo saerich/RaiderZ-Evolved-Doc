@@ -1,0 +1,17 @@
+PMSConn_날짜.zip
+
+[PMS 연동 문서]
+- PMS_PMSConn 연동 메뉴얼.doc                    PMS (HA)와의 연동을 위한 기본 설명 문서
+- PMS_SPEC_Protocol_GSHA.doc                     PMS (HA)와 게임 서버간의 통신 프로토콜 설명
+
+[PMS 연동 라이브러리]
+- PMSConn.dll				Release Vesrion
+- PMSConnD.dll				Debug Version
+- PMSConnU.dll				Unicode Release Version
+- PMSConnUD.dll				Unicode Debug Version
+
+
+*Visual Studio 2005, 2008 에서 라이브러리 사용에 문제가 있는 경우,
+ 2005 - PMSConn 3.0.1.x 
+ 2008 - PMSConn 3.0.2.x 압축 파일의 라이브러리를 사용하시기 바랍니다.
+

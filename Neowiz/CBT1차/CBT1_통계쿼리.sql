@@ -1,0 +1,156 @@
+-- GAMEDB 기준.
+
+---- 플레이어가 학습한 텔런트 수
+--SELECT t.Name, t.TaltID, ti.CNT
+--FROM   (SELECT TaltID, COUNT(*) AS CNT
+--		FROM   dbo.RZ_TALENT_INSTANCE
+--		GROUP BY TaltID) ti
+--	   INNER JOIN dbo.RZ_TALENT t
+--		ON t.TaltID = ti.TaltID
+--ORDER BY ti.CNT DESC;
+
+---- 1시간 미만, 3시간 미만 플레이어 학습 텔런트 수
+--SELECT CASE ti_cnt.CODE 
+--			WHEN 1 THEN '1시간 미만'
+--			WHEN 2 THEN '2시간 미만' END play_type
+--	 , t.Name
+--	 , t.TaltID
+--	 , ti_cnt.CNT
+--FROM   (SELECT ch.CODE, ti.TaltID, COUNT(*) AS CNT
+--		FROM   (SELECT CASE WHEN PlayTm < 3600 THEN 1 ELSE 2 END CODE
+--					 , CID
+--				FROM   dbo.RZ_CHARACTER 
+--				WHERE  PlayTm BETWEEN 0 AND 10800) ch
+--			   INNER JOIN dbo.RZ_TALENT_INSTANCE ti
+--				ON ti.CID = ch.CID
+--		GROUP BY ch.CODE, ti.TaltID) ti_cnt
+--	   INNER JOIN dbo.RZ_TALENT t
+--		ON t.TaltID = ti_cnt.TaltID
+--ORDER BY ti_cnt.CODE, ti_cnt.CNT DESC;
+
+---- 유저가 갖고 있는 장비/무기 아이템별 갯수
+--SELECT i.Name, i.ItemID, COUNT(*) AS CNT
+--FROM   dbo.RZ_ITEM i
+--	   INNER JOIN dbo.RZ_ITEM_INSTANCE ii
+--		ON ii.ItemID = i.ItemID
+--WHERE  i.[Type] IN (1, 2)
+--AND	   ii.IUID > 0
+--GROUP BY i.ItemID, i.Name
+--ORDER BY COUNT(*) DESC;
+
+---- 에픽 몬스터별 사냥 횟수
+--SELECT NPCID, COUNT(*)
+--FROM   CBT1_LOGDB.dbo.RZ_NPC_KILLED_LOG
+--GROUP BY NPCID
+--ORDER BY COUNT(*) DESC;
+
+---- 퀘스트별 완료 횟수
+--SELECT q.Name, q.QuestID, ql.CNT
+--FROM   (SELECT QuestID, COUNT(*) CNT
+--		FROM   dbo.RZ_QUEST_LOG 
+--		WHERE  [Type] = 42
+--		GROUP BY QuestID) ql
+--	   INNER JOIN dbo.RZ_QUEST q
+--		ON q.QuestID = ql.QuestID
+--ORDER BY ql.CNT DESC;
+
+---- 장인이 만들어준 아이템별 횟수
+--SELECT i.Name, i.ItemID, il.CNT
+--FROM   (SELECT ItemID, COUNT(*) CNT
+--		FROM   dbo.RZ_ITEM_LOG
+--		WHERE  [Type] = 62
+--		GROUP BY ItemID) il
+--	   INNER JOIN dbo.RZ_ITEM i
+--		ON i.ItemID = il.ItemID
+--ORDER BY il.CNT DESC;
+
+---- 레벨별 죽음 횟수
+--SELECT [Level], COUNT(*)
+--FROM   CBT1_LOGDB.dbo.RZ_CHARACTER_LOG 
+--WHERE  [Type] = 14
+--GROUP BY [Level]
+--ORDER BY [Level];
+
+---- 총 플레이 시간 3시간 미만의 플레이어의 레벨별 죽음 횟수
+--SELECT cl.[Level], COUNT(*)
+--FROM   dbo.RZ_CHARACTER c   
+--	   INNER JOIN CBT1_LOGDB.dbo.RZ_CHARACTER_LOG cl
+--		ON cl.CID = c.CID
+--WHERE  c.PlayTm <= 10800
+--	   AND cl.[Type] = 14
+--GROUP BY cl.[Level]
+--ORDER BY cl.[Level];
+
+---- 총 플레이 시간 3시간 미만의 플레이어의 갖고 있는 장비/무기 아이템별 갯수
+--SELECT i.ItemID, i.Name, COUNT(*) AS CNT
+--FROM   dbo.RZ_CHARACTER c
+--	   INNER JOIN dbo.RZ_ITEM_INSTANCE ii
+--		ON ii.CID = c.CID
+--			INNER JOIN dbo.RZ_ITEM i
+--				ON i.ItemID = ii.ItemID
+--WHERE  c.PlayTm <= 10800
+--AND	   ii.IUID > 0
+--AND	   i.[Type] IN (1, 2)
+--GROUP BY i.ItemID, i.Name
+--ORDER BY COUNT(*) DESC;
+
+---- 총 플레이 시간 5시간 미만의 플레이어의 갖고 있는 장비/무기 아이템별 갯수
+--SELECT i.ItemID, i.Name, COUNT(*) AS CNT
+--FROM   dbo.RZ_CHARACTER c
+--	   INNER JOIN dbo.RZ_ITEM_INSTANCE ii
+--		ON ii.CID = c.CID
+--			INNER JOIN dbo.RZ_ITEM i
+--				ON i.ItemID = ii.ItemID
+--WHERE  c.PlayTm <= 18000
+--AND	   ii.IUID > 0
+--AND	   i.[Type] IN (1, 2)
+--GROUP BY i.ItemID, i.Name
+--ORDER BY COUNT(*) DESC;
+
+---- Level별 플레이 시간(30분단위)
+--SELECT pvt.*
+--FROM   (SELECT cla.CID, cla.[Level] AS LEV, ((cla.CharPtm - ISNULL(clb.CharPtm, 0)) / (60 * 30)) * 30 AS PLAY_TIME
+--		FROM   CBT1_GAMEDB.dbo.RZ_CHARACTER_LOG cla
+--			   LEFT OUTER JOIN CBT1_GAMEDB.dbo.RZ_CHARACTER_LOG clb
+--				ON clb.CID = cla.CID
+--				AND clb.[Type] = cla.[Type]
+--				AND clb.[Level] = cla.[Level] - 1
+--		WHERE  cla.[Type] = 13) A
+--PIVOT (COUNT(CID) 
+--		FOR PLAY_TIME IN ([0], [30], [60], [90], [120], [150], [180], [210], [240], [270]
+--						, [300], [330], [360], [390], [420], [450], [480], [510], [540])) pvt
+--ORDER BY pvt.LEV;
+
+-- Level별 평균 플레이 시간(분단위)
+--SELECT A.LEV, AVG(A.PLAY_TIME) / 60 AS PLAY_TIME_MINUTE, AVG(A.PLAY_TIME) / 3600 AS PLAY_TIME_HOUR
+--FROM   (SELECT cla.CID, cla.[Level] AS LEV, ((cla.CharPtm - ISNULL(clb.CharPtm, 0))) AS PLAY_TIME
+--		FROM   CBT1_GAMEDB.dbo.RZ_CHARACTER_LOG cla
+--			   LEFT OUTER JOIN CBT1_GAMEDB.dbo.RZ_CHARACTER_LOG clb
+--				ON clb.CID = cla.CID
+--				AND clb.[Type] = cla.[Type]
+--				AND clb.[Level] = cla.[Level] - 1
+--		WHERE  cla.[Type] = 13) A
+--GROUP BY A.LEV
+--ORDER BY A.LEV;
+
+---- 제작횟수별캐릭터수
+--SELECT A.CNT, COUNT(*) CID_CNT
+--FROM   (SELECT CID, COUNT(*) CNT
+--		FROM   CBT1_GAMEDB.dbo.RZ_CHARACTER_LOG
+--		WHERE  [Type] = 62
+--		GROUP BY CID) A
+--GROUP BY A.CNT
+--ORDER BY A.CNT;
+
+---- 캐릭터 죽은 위치.
+--SELECT FieldID, PosX, PosY, PosZ
+--FROM   CBT1_LOGDB.dbo.RZ_CHARACTER_LOG
+--WHERE  [Type] = 14
+--AND	   FieldID > 0
+--ORDER BY FieldID, RegDt;
+
+--SELECT [Level], SharedFieldID, PosX, PosY, PosZ
+--FROM   dbo.RZ_CHARACTER
+--WHERE  [Level] BETWEEN 1 AND 5
+--AND	   SharedFieldID > 0
+--ORDER BY [Level], SharedFieldID;
